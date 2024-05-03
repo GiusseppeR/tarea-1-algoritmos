@@ -22,7 +22,6 @@ typedef struct {
  */
 static Point centroid(Point * input) {
     long int const n = array_length(input); //ver si n es dado.
-
     double sum_x = 0.0;
     double sum_y = 0.0;
 
@@ -48,7 +47,7 @@ static Point primaryMedoide(Point * input) {
     Point c = centroid(input);
     Point medoide;
     double max= INFINITY;
-    //y lurgo veremos el punto más cercano a este
+    //y luego veremos el punto más cercano a este
     for(int i=0; i < array_length(input); i++) {
         double pivot= squaredDistance(c, input[i]);
         if(pivot < max) {
@@ -57,7 +56,6 @@ static Point primaryMedoide(Point * input) {
         }
     }
     return medoide;
-
 
 }
 
@@ -77,9 +75,15 @@ static Tuple leaf(Point * input){
 }
 
 //Metodo para Cluster
-
 static Point * cluster(Point* input) {
+    int *C = array(Point, &my_allocator); //array de puntos c
+    int *Cout = array(Point, &my_allocator); //array de puntos cout
+    for(int i=0; i < array_length(input); i++) {
+        array_append(C, &input[i]); //se añaden los puntos del input a c
+    }
+    while(array_length(C) > 1) {
 
+    }
 }
 
 
