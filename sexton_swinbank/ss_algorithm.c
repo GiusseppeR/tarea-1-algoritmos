@@ -14,9 +14,30 @@ typedef struct {
     double *r; //radio cobertor
     void *a; //cambiar, direccion del hijo
 }Tuple;
-//FALTA VER CENTROIDE
+/**
+ * @brief función que calcula el punto centroide de un set de puntos
+ *
+ * @param input arreglo de puntos
+ * @return el centroide del arreglo
+ */
 static Point centroid(Point * input) {
+    long int const n = array_length(input); //ver si n es dado.
 
+    double sum_x = 0.0;
+    double sum_y = 0.0;
+
+    // Sumar las coordenadas x e y de todos los puntos
+    for (int i = 0; i < n; i++) {
+        sum_x += input[i].x;
+        sum_y += input[i].y;
+    }
+
+    // Calcular las coordenadas del centroide
+    Point centroid_point; // index no está inicializado.
+    centroid_point.x = sum_x / n;
+    centroid_point.y = sum_y / n;
+
+    return centroid_point;
 }
 //funcion para definir medoide primario
 static Point primaryMedoide(Point * input) {
