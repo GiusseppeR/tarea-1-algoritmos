@@ -56,17 +56,19 @@ static Point primaryMedoide(Point * input) {
 }
 
 //Metodo para output hoja
-static Tuple leaf(Point * input){
+static Entry leaf(Point * input){
+    int n = array_length(input);
     Point g = primaryMedoide(input); //medoide primario de input
     double r = 0; //radio
-    int *C = array(Tuple, &my_allocator); //Nodo hoja
-    for(int i = 0; i < array_length(input); i++){ //para cada punto del input
-        Tuple p = {input[i], NULL, NULL}; //aramamos una tupla
-        array_append(C, &p); //lo agregamos a C
-        double r_a = squaredDistance(g,p.g); //distancia
+    Tree C = {0, 0, (Entry*)array(Entry,&my_allocator),NULL};
+    for(int i = 0; i < n; i++){ //para cada punto del input
+        Entry p = {input[i], 0, NULL}; //aramamos una tupla
+        array_append(C.entries, p); //lo agregamos a C
+        C.size++;
+        double r_a = squaredDistance(g,p.point); //distancia
         r = ( r > r_a) ? r : r_a;//recalculamos r
     }
-    Tuple ret = {g, &r, &C }; //creamos tupla de hoja
+    Entry ret = {g, r, &C }; //creamos tupla de hoja
     return ret; //se retorna
 }
 
