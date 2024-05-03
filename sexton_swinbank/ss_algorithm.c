@@ -14,6 +14,13 @@ typedef struct {
     double *r; //radio cobertor
     void *a; //cambiar, direccion del hijo
 }Tuple;
+
+typedef struct cluster{
+    void *array;
+    Tuple *tuple;
+} Cluster;
+
+
 /**
  * @brief función que calcula el punto centroide de un set de puntos
  *
@@ -74,17 +81,86 @@ static Tuple leaf(Point * input){
     return ret; //se retorna
 }
 
-//Metodo para Cluster
-static Point * cluster(Point* input) {
-    int *C = array(Point, &my_allocator); //array de puntos c
-    int *Cout = array(Point, &my_allocator); //array de puntos cout
-    for(int i=0; i < array_length(input); i++) {
-        array_append(C, &input[i]); //se añaden los puntos del input a c
-    }
-    while(array_length(C) > 1) {
+static Cluster * find_nearest_cluster(Cluster *C) {
 
-    }
 }
+//meter al utils
+int compare(Point p1, Point p2) {
+    return (p1.x == p2.x) & (p1.y == p2.y);
+}
+
+Cluster cluster_union(Cluster c1, Cluster c2) {
+    Cluster cluster_res;
+}
+
+void cluster_remove(Cluster c1, Cluster *c2) {
+}
+Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
+    Cluster pivote;
+    return pivote;
+}
+
+Cluster *min_max_policy(Cluster c1, Cluster c2) {
+
+}
+
+//Metodo para Cluster
+static Cluster * cluster(Point* input) { // ver si nos dan "n"
+    Cluster *C = array(Cluster, &my_allocator); //array de puntos c
+    Cluster *Cout = array(Cluster, &my_allocator); //array de puntos cout
+    Point *C_prima = array(Point, &my_allocator);
+    long int n = array_length(input);
+    for(int i=0; i < n; i++) {
+        array_append(C_prima, input[i]);
+        Point *subset = array(Point, &my_allocator); // creamos un sub conjunto de puntos {}
+        array_append(subset, input[i]); // se agrega el input[i]
+        Tuple tuple = {input[i], NULL, NULL}; // creamos la tupla para input[i]
+        Cluster sub_cluster = {subset, &tuple}; // cremos el cluster
+        array_append(C, sub_cluster); //se añaden los subconjutos con cada punto del input a C
+    }//C = {{p1}, {p2}, {p3} ...}
+    while(array_length(C) > 1) {
+        ClosestPoints closest_points = closest(C_prima,array_length(C_prima));
+        Cluster cluster1,cluster2;
+        for (int i = 0; i<array_length(C); i++) {
+            if (compare(C[i].tuple->g,closest_points.point1)) {
+                cluster1 = C[i];
+            }
+            else if (compare(C[i].tuple->g,closest_points.point2)){
+                cluster2 = C[i];
+            }
+        }
+        Cluster c1 = (array_length(cluster1.array) > array_length(cluster2.array))? cluster1: cluster2;
+        Cluster c2 = (array_length(cluster1.array) <= array_length(cluster2.array))? cluster1: cluster2;
+        if (array_length(c1.array) + array_length(c2.array) <=B) {
+            cluster_remove(c1,C);
+            cluster_remove(c2,C);
+            Cluster new_cluster = cluster_union(c1,c2);
+            array_append(C,new_cluster);
+        }
+        else {
+            cluster_remove(c1,C);
+            array_append(Cout,c1);
+        }
+    }
+    Cluster c = C[0];
+    Cluster *c_prima = NULL;
+    if (array_length(Cout) >0) {
+        *c_prima = cluster_nearest_neighbor(Cout,c); //diagnosticar
+        cluster_remove(*c_prima,Cout);
+    }
+    if ((array_length(c.array) + array_length(c_prima->array))<=B) {
+        Cluster new_cluster = cluster_union(c,*c_prima);
+        array_append(Cout,new_cluster);
+    }
+    else {
+        Cluster *final_clusters = min_max_policy(c,*c_prima);
+        Cluster c1 = final_clusters[0], c2 = final_clusters[1];
+        array_append(Cout,c1);
+        array_append(Cout,c2);
+    }
+    return Cout;
+}
+
 
 
 
