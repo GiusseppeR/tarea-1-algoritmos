@@ -70,14 +70,14 @@ void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *clo
 
     if (tree->depth % 2 == 1) {
         if (point.x < value.x)
-            return findClosestBT2D(tree->left, value, distance, closest);
+            findClosestBT2D(tree->left, value, distance, closest);
         else
-            return findClosestBT2D(tree->right, value, distance, closest);
+            findClosestBT2D(tree->right, value, distance, closest);
     } else {
         if (point.y < value.y)
-            return findClosestBT2D(tree->left, value, distance, closest);
+            findClosestBT2D(tree->left, value, distance, closest);
         else
-            return findClosestBT2D(tree->right, value, distance, closest);
+            findClosestBT2D(tree->right, value, distance, closest);
     }
 }
 

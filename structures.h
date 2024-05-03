@@ -2,8 +2,6 @@
 #define TAREALOG_STRUCTURES_H
 #include "arrays/array.h"
 
-#define B 4096
-#define b 2048
 #define TRUE 1
 #define FALSE 0
 
@@ -34,5 +32,8 @@ typedef struct closestPoints {
 }ClosestPoints;
 Tree * ciaccia_patella(Point * input);
 void free_tree(Tree *tree);
+
+#define B (4096/sizeof(Entry))
+#define b (B/2)
 
 #endif

@@ -147,7 +147,7 @@ static void check_height(Tree * tree, Point sample, int height, Tree **T, Point 
         array_append(*F,sample);
         return;
     }
-    return find_subtrees_by_height(tree, height, T, F);
+    find_subtrees_by_height(tree, height, T, F);
 }
 
 /*                               Pasos 7 y 9                                     */
