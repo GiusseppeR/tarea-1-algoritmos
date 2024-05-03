@@ -17,15 +17,9 @@ double squaredDistance(const Point p1, const Point p2){
     double dy = p1.y - p2.y;
     return dx * dx + dy * dy;
 }
-// A structure to represent a Pair of Points
-struct ClosestPoints {
-    Point point1;
-    Point point2;
-    float distance;
-};
 
 // Global variable to store the closest pair of points
-struct ClosestPoints closestPair;
+ClosestPoints closestPair;
 
 /* Following two functions are needed for library function qsort().
    Refer: http://www.cplusplus.com/reference/clibrary/cstdlib/qsort/ */
@@ -137,7 +131,7 @@ float closestUtil(Point P[], int n)
 
 // The main function that finds the smallest distance
 // This method mainly uses closestUtil()
-struct ClosestPoints closest(Point P[], int n)
+ClosestPoints closest(Point P[], int n)
 {
     qsort(P, n, sizeof(Point), compareX);
 
