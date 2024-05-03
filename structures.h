@@ -25,6 +25,12 @@ typedef struct entry{
     double radius;
     Tree* subTree;
 }Entry;
+
+typedef struct cluster{
+    Point *array;
+    int index_primary_medoide;
+} Cluster;
+
 typedef struct closestPoints {
     Point point1;
     Point point2;

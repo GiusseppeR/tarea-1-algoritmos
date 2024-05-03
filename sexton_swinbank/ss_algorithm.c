@@ -9,17 +9,6 @@
 
 Allocator my_allocator = {my_alloc, my_free, 0};
 
-typedef struct {
-    Point g; //medoide
-    double *r; //radio cobertor
-    void *a; //cambiar, direccion del hijo
-}Tuple;
-
-typedef struct cluster{
-    void *array;
-    Tuple *tuple;
-} Cluster;
-
 
 /**
  * @brief función que calcula el punto centroide de un set de puntos
