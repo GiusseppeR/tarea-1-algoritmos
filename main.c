@@ -1,11 +1,12 @@
 #include <stdio.h>
+#include <conio.h>
 #include <time.h>
 #include "structures.h"
 #include "arrays/array.h"
 #include "random/custom_random.h"
 #include "utils.h"
 
-int main() {
+int main(void) {
     Allocator allocator = {my_alloc, my_free, 0};
     splitmix64_init((uint64_t) time(NULL));
     xoshiro256plus_init();
@@ -25,5 +26,6 @@ int main() {
     for(int i = 0; i < tree->size; i++)
         printf("radius %i: %f\n", i, tree->entries[i].radius);
     free_tree(tree);
+    _getch();
     return 0;
 }
