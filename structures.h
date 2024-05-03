@@ -27,7 +27,11 @@ typedef struct entry{
     double radius;
     Tree* subTree;
 }Entry;
-
+typedef struct closestPoints {
+    Point point1;
+    Point point2;
+    float distance;
+}ClosestPoints;
 Tree * ciaccia_patella(Point * input);
 void free_tree(Tree *tree);
 
