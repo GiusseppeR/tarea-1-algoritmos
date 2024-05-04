@@ -63,7 +63,34 @@ Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
     return pivote;
 }
 
+Point * get_clusters_points(Cluster c1, Cluster c2) {
+    Point * all_points = array(Point,&my_allocator);
+    int c1_lenght = array_length(c1.array);
+    int c2_lenght = array_length(c2.array);
+    int n = (c1_lenght>c2_lenght) ? c1_lenght : c2_lenght;
+    for (int i = 0; i<n; i++) {
+        if (i<c1_lenght) {
+            array_append(all_points,c1.array[0]);
+        }
+        if (i<c2_lenght) {
+            array_append(all_points,c2.array[0]);
+        }
+    }
+    return all_points;
+}
+
 Cluster *min_max_policy(Cluster c1, Cluster c2) {
+    Cluster result[2];
+    Point * all_points = get_clusters_points(c1,c2);
+    Point random_points[2];
+    for (int i = 0; i<array_length(all_points)-1; i++) {
+        int j = i+1;
+        while (j < array_length(all_points)) {
+            random_points[0] = all_points[i];
+            random_points[1] = all_points[j];
+            j++;
+        }
+    }
 
 }
 
@@ -122,7 +149,31 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
     }
     return Cout;
 }
+/**
+ *  @brief  Función que retorna todos los puntos de un arreglo de entries
+ */
+Point * entries_get_points(Entry * entries) {
+    Point * points = array(Point, &my_allocator);
+    for (int i = 0; i<array_length(entries); i++) {
+        array_append(points,entries[i].point);
+    }
+    return points;
+}
 
-
-
+/**
+ * @brief Función que retorna un entry (G,R,A)
+ */
+static Entry intern_leaf(Tree* c_mra) {
+    Point * c_in = entries_get_points(c_mra->entries); // Agrupo solo los puntos de las entries
+    Point g = primaryMedoide(c_in); // Encuentro el medoide primario de este
+    double r = 0.0; // Seteo el radio en 0
+    for (int i = 0; i<array_length(c_mra); i++) {
+        r = fmax(r,squaredDistance(g,c_in[i])); // Voy actualizando la R con cada punto de c_in
+    }
+    Entry result = {g,r,c_mra}; // Creo el entry de salida
+    Entry * c = array(Entry,&my_allocator); // creo el arreglo final
+    array_append(c,result); // añado el resultado al arreglo c, que va a corresponder al padre del nodo
+    c_mra->parent = c; // seteo c como el padre del arreglo de entries c_mra
+    return result;
+}
 
