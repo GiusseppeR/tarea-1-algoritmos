@@ -6,7 +6,6 @@
 #include <float.h>
 #include <stdlib.h>
 
-Allocator my_allocator = {my_alloc, my_free, 0};
 //meter al utils
 int compare(Point p1, Point p2) {
     return (p1.x == p2.x) & (p1.y == p2.y);
