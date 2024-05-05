@@ -8,7 +8,7 @@
 #include "../random/custom_random.h"
 
 Allocator my_allocator = {my_alloc, my_free, 0};
-
+Point * get_clusters_points(Cluster c1, Cluster c2);
 //funcion para definir medoide primario
 static Point primaryMedoide(Point * input) {
     double min =-1; //iniciamos un min
@@ -44,15 +44,27 @@ static Entry leaf(Point * input){
     return ret; //se retorna
 }
 
-static Cluster * find_nearest_cluster(Cluster *C) {
-
-}
-
 Cluster cluster_union(Cluster c1, Cluster c2) {
-    Cluster cluster_res;
+    Point * points = get_clusters_points(c1,c2);
+    Point medoid = primaryMedoide(points);
+    int index_medoid = 0;
+    for (int i=0; array_length(points); i++) {
+        if (compare(medoid,points[i])) {
+            index_medoid = i;
+        }
+    }
+    Cluster cluster_res = {points,index_medoid};
+    free(c1.array);
+    free(c2.array);
+    return cluster_res;
 }
 
 void cluster_remove(Cluster c1, Cluster *c2) {
+    for (int i=0; i < array_length(c2); i++) {
+        if (&c2[i] == &c1) {
+            array_remove(c2,i);
+        }
+    }
 }
 
 Point find_closest_to(Point * points, Point pivot) {
@@ -69,14 +81,18 @@ Point find_closest_to(Point * points, Point pivot) {
 
 //funcion para buscar el vecino mas cercano a c en cout
 Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
-    Cluster ret;
-    int find_closest_index= c.index_primary_medoide;
+    Cluster nearest_to_c = {NULL,0};
+    int min = INFINITY;
     Point c_medoid= c.array[c.index_primary_medoide]; //guardamos su medoide
     //ahora en los medoides de Cout q son los guardados en C_prima queremos encontrar el cluster mas cercano a c
-    //Point closest_medoid = find_closest_to(Cout_medoids,c_medoid); //buscamos el mas cercano en cout al medoide de c
-
-
-    return ret;
+    for (int i=0;i<array_length(Cout);i++) {
+        int new_min = squaredDistance(Cout[i].array[Cout[i].index_primary_medoide],c_medoid);
+        if ( new_min < min) {
+            nearest_to_c = Cout[i];
+            min = new_min;
+        }
+    }
+    return nearest_to_c;
 }
 
 Point * get_clusters_points(Cluster c1, Cluster c2) {
@@ -95,19 +111,44 @@ Point * get_clusters_points(Cluster c1, Cluster c2) {
     return all_points;
 }
 
+double cluster_covering_radio(Cluster c);
+Cluster * make_cluster(Point p1, Point p2, Point * points);
+/* input: c1,c2 clusters
+ *  1. all_points como todos los puntos en c1 y c2
+ *  2. liberamos memoria de c1 y c2
+ *  3. agarrar dos puntos aleatorios
+ *  4. crear los clusters de cada punto
+ *  5. comparar distancias de los radios y quedarnos con el r_max
+ *  6. r_max se compara con el r_min_max y se guarda de ser menor a este
+ */
 Cluster *min_max_policy(Cluster c1, Cluster c2) {
-    Cluster result[2];
-    Point * all_points = get_clusters_points(c1,c2);
+    Cluster *result = (Cluster *)malloc(sizeof(Cluster)*2);
+    Point * all_points = get_clusters_points(c1,c2); //la unión de c1 y c2
+    free(c1.array);
+    free(c2.array);
     Point random_points[2];
+    double r_min_max = INFINITY;
+    //{p1,p2,p3,p4,p5,p6...}
     for (int i = 0; i<array_length(all_points)-1; i++) {
         int j = i+1;
         while (j < array_length(all_points)) {
             random_points[0] = all_points[i];
             random_points[1] = all_points[j];
+            Cluster *clusters;
+            clusters = make_cluster(random_points[0],random_points[1],all_points);
+            double r1 = cluster_covering_radio(result[0]);
+            double r2 = cluster_covering_radio(result[1]);
+            double r_max = (r1>r2)? r1:r2;
+            if (r_max<r_min_max & j!=1 ) {
+                free(result[0].array);
+                free(result[1].array);
+            }
+            r_min_max = r_max;
+            result = clusters;
             j++;
         }
     }
-
+    return result;
 }
 
 Cluster * nearest_clusters(Cluster * clusters) {
@@ -208,7 +249,15 @@ static Entry internal(Tree* c_mra) {
 
 Entry * entry_filter(Cluster c, Entry *p) {
     Entry * final = array(Entry, &my_allocator);
-
+    for (int i = 0; array_length(c.array); i++) {
+        for (int j = 0; array_length(p);j++) {
+            if (&c.array[i] == &p[j].point) {
+                array_append(final,p[j]);
+                break;
+            }
+        }
+    }
+    return final;
 }
 
 static Tree * sexton_swinbank(Point * c_in) {
