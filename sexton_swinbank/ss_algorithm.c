@@ -303,25 +303,25 @@ Entry * entry_filter(Cluster c, Entry *p) {
     return final;
 }
 
-static Tree * sexton_swinbank(Point * c_in) {
+Tree * sexton_swinbank(Point * input) {
     /*
      * Caso base
      */
-    if (array_length(c_in)<=B) {
+    if (array_length(input)<=B) {
         Tree * final_tree = array(Tree,&my_allocator);
-        const Entry final = leaf(c_in);
+        const Entry final = leaf(input);
         array_append(final_tree,*final.subTree);
         return final_tree;
     }
-    Cluster * c_out = cluster(c_in);
+    Cluster * c_out = cluster(input);
     Entry * c_entries = array(Entry, &my_allocator);
     for (int i = 0; i<array_length(c_out); i++) {
         array_append(c_entries,leaf(c_out[i].array));
     }
     Tree c = {1,array_length(c_entries),c_entries,NULL};
     while (c.size > B) {
-        c_in = entries_get_points(c.entries);
-        c_out = cluster(c_in);
+        input = entries_get_points(c.entries);
+        c_out = cluster(input);
         Tree * c_mra = array(Tree ,&my_allocator); //ver sis e pueden cambiar por trees
         for (int i=0; i<array_length(c_out);i++) {
             Entry * s = entry_filter(c_out[i],c.entries);
