@@ -47,10 +47,6 @@ static Entry leaf(Point * input){
 static Cluster * find_nearest_cluster(Cluster *C) {
 
 }
-//meter al utils
-int compare(Point p1, Point p2) {
-    return (p1.x == p2.x) & (p1.y == p2.y);
-}
 
 Cluster cluster_union(Cluster c1, Cluster c2) {
     Cluster cluster_res;
@@ -60,7 +56,7 @@ void cluster_remove(Cluster c1, Cluster *c2) {
 }
 
 Point find_closest_to(Point * points, Point pivot) {
-    int min =-1;
+    int min =INFINITY;
     Point closest = {0,0};
     for(int i=0; i < array_length(points); i++) {
         if(squaredDistance(points[i], pivot) < min) {
