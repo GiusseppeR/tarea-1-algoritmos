@@ -12,7 +12,7 @@ Allocator my_allocator = {my_alloc, my_free, 0};
 //funcion para definir medoide primario
 static Point primaryMedoide(Point * input) {
     double min =-1; //iniciamos un min
-    Point medoide;
+    Point medoide={0,0};
     for(int i=0; i < array_length(input); i++) {
         double dist=0; //iniciamos la distancia para actualizarla
         for(int k=0; k < array_length(input); i++ ) {
@@ -33,13 +33,13 @@ static Entry leaf(Point * input){
     double r = 0; //radio
     Tree C = {0, 0, (Entry*)array(Entry,&my_allocator),(Entry*)array(Entry,&my_allocator)};
     for(int i = 0; i < n; i++){ //para cada punto del input
-        Entry p = {input[i], 0, NULL}; //aramamos una tupla
+        Entry p = {input[i], 0, NULL}; //aramamos un entry
         array_append(C.entries, p); //lo agregamos a C
         C.size++;
         double r_a = squaredDistance(g,p.point); //distancia
         r = ( r > r_a) ? r : r_a;//recalculamos r
     }
-    Entry ret = {g, r, &C }; //creamos tupla de hoja
+    Entry ret = {g, r, &C }; //creamos entry de hoja
     array_append(C.parent,ret);
     return ret; //se retorna
 }
@@ -59,9 +59,28 @@ Cluster cluster_union(Cluster c1, Cluster c2) {
 void cluster_remove(Cluster c1, Cluster *c2) {
 }
 
-Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
-    Cluster pivote;
-    return pivote;
+Point find_closest_to(Point * points, Point pivot) {
+    int min =-1;
+    Point closest = {0,0};
+    for(int i=0; i < array_length(points); i++) {
+        if(squaredDistance(points[i], pivot) < min) {
+            min = squaredDistance(points[i], pivot);
+            closest= points[i];
+        }
+    }
+    return closest;
+}
+
+//funcion para buscar el vecino mas cercano a c en cout
+Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c, Point * Cout_medoids) {
+    Cluster ret;
+    int find_closest_index= c.index_primary_medoide;
+    Point c_medoid= c.array[c.index_primary_medoide]; //guardamos su medoide
+    //ahora en los medoides de Cout q son los guardados en C_prima queremos encontrar el cluster mas cercano a c
+    Point closest_medoid = find_closest_to(Cout_medoids,c_medoid); //buscamos el mas cercano en cout al medoide de c
+
+
+    return ret;
 }
 
 Point * get_clusters_points(Cluster c1, Cluster c2) {
@@ -100,6 +119,7 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
     Cluster *C = array(Cluster, &my_allocator); //array de puntos c
     Cluster *Cout = array(Cluster, &my_allocator); //array de puntos cout
     Point *C_prima = array(Point, &my_allocator);
+    Point *Cout_medoids = array(Point, &my_allocator);
     long int n = array_length(input);
     for(int i=0; i < n; i++) {
         array_append(C_prima, input[i]); //en c prima guardaremos los medoides de cada cluster
@@ -107,7 +127,7 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
         array_append(subset, input[i]); // se agrega el input[i]
         Cluster sub_cluster = {subset, i}; // cremos el cluster {[]}
         array_append(C, sub_cluster); //se añaden los subconjutos con cada punto del input a C
-    }//C = {{p1}, {p2}, {p3} ...}
+    }//C = {{p1, 0}, {p2, 0}, {p3, 0} ...}
     while(array_length(C) > 1) { //mientras el tamaño de C sea mayor a 1 es decir mientras podemos separar
         ClosestPoints closest_points = closest(C_prima,array_length(C_prima));  //primero buscamos el par de medoides mas cercanos en cprima
         Cluster cluster1,cluster2; //luego buscamos a que cluster corresponden
@@ -129,13 +149,14 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
         }
         else {
             cluster_remove(c1,C); //si no quitamos el mas grande
+            array_append(Cout_medoids, c1.array[c1.index_primary_medoide]);
             array_append(Cout,c1); //y lo agregamos solito a c
         }
     }
-    Cluster c = C[0];
-    Cluster *c_prima = NULL;
-    if (array_length(Cout) >0) {
-        *c_prima = cluster_nearest_neighbor(Cout,c); //diagnosticar
+    Cluster c = C[0]; //se define c como el unico elemento que queda en c
+    Cluster *c_prima = NULL; //iniciamos c prima nulo
+    if (array_length(Cout) >0) { //si el tamaño de cout es mayor a 0
+        *c_prima = cluster_nearest_neighbor(Cout,c, Cout_medoids); //buscamos en cout el vecino mas cercano a c
         cluster_remove(*c_prima,Cout);
     }
     if ((array_length(c.array) + array_length(c_prima->array))<=B) {
@@ -169,7 +190,7 @@ static Entry internal(Tree* c_mra) {
     Point g = primaryMedoide(c_in); // Encuentro el medoide primario de este
     double r = 0.0; // Seteo el radio en 0
     for (int i = 0; i<array_length(c_mra); i++) {
-        r = fmax(r,squaredDistance(g,c_in[i])); // Voy actualizando la R con cada punto de c_in
+        r = fmax(r,squaredDistance(g,c_in[i]) + c_mra->entries[i].radius); // Voy actualizando la R con cada punto de c_in
     }
     Entry result = {g,r,c_mra}; // Creo el entry de salida
     Entry * c = array(Entry,&my_allocator); // creo el arreglo final
