@@ -31,7 +31,7 @@ static Entry leaf(Point * input){
     int n = array_length(input);
     Point g = primaryMedoide(input); //medoide primario de input
     double r = 0; //radio
-    Tree C = {0, 0, (Entry*)array(Entry,&my_allocator),NULL};
+    Tree C = {0, 0, (Entry*)array(Entry,&my_allocator),(Entry*)array(Entry,&my_allocator)};
     for(int i = 0; i < n; i++){ //para cada punto del input
         Entry p = {input[i], 0, NULL}; //aramamos una tupla
         array_append(C.entries, p); //lo agregamos a C
@@ -40,6 +40,7 @@ static Entry leaf(Point * input){
         r = ( r > r_a) ? r : r_a;//recalculamos r
     }
     Entry ret = {g, r, &C }; //creamos tupla de hoja
+    array_append(C.parent,ret);
     return ret; //se retorna
 }
 
