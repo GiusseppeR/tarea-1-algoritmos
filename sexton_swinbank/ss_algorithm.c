@@ -68,12 +68,12 @@ Point find_closest_to(Point * points, Point pivot) {
 }
 
 //funcion para buscar el vecino mas cercano a c en cout
-Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c, Point * Cout_medoids) {
+Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
     Cluster ret;
     int find_closest_index= c.index_primary_medoide;
     Point c_medoid= c.array[c.index_primary_medoide]; //guardamos su medoide
     //ahora en los medoides de Cout q son los guardados en C_prima queremos encontrar el cluster mas cercano a c
-    Point closest_medoid = find_closest_to(Cout_medoids,c_medoid); //buscamos el mas cercano en cout al medoide de c
+    //Point closest_medoid = find_closest_to(Cout_medoids,c_medoid); //buscamos el mas cercano en cout al medoide de c
 
 
     return ret;
@@ -110,30 +110,39 @@ Cluster *min_max_policy(Cluster c1, Cluster c2) {
 
 }
 
+Cluster * nearest_clusters(Cluster * clusters) {
+    Point * medoide_array = array(Point,&my_allocator);
+    for (int i = 0; i<array_length(clusters);i++) {
+        array_append(medoide_array,clusters[i].array[clusters[i].index_primary_medoide]);
+    }
+    ClosestPoints points = closest(medoide_array, array_length(medoide_array));
+    Cluster * nearest_clusters = malloc(sizeof(Cluster)*2);
+    int flag1 = TRUE, flag2= TRUE;
+    for (int i = 0; i<array_length(clusters); i++) {
+        if (compare(nearest_clusters[i].array[nearest_clusters->index_primary_medoide],points.point1) & flag1) {
+            nearest_clusters[0] = nearest_clusters[i];
+            flag1 = FALSE;
+        }
+        else if(compare(nearest_clusters[i].array[nearest_clusters->index_primary_medoide],points.point1) & flag2) {
+            nearest_clusters[1] = nearest_clusters[i];
+            flag2 = FALSE;
+        }
+    }
+    return nearest_clusters;
+}
 //Metodo para Cluster
 static Cluster * cluster(Point* input) { // ver si nos dan "n"
     Cluster *C = array(Cluster, &my_allocator); //array de puntos c
     Cluster *Cout = array(Cluster, &my_allocator); //array de puntos cout
-    Point *C_prima = array(Point, &my_allocator);
-    Point *Cout_medoids = array(Point, &my_allocator);
     for(int i=0; i < array_length(input); i++) {
-        array_append(C_prima, input[i]); //en c prima guardaremos los medoides de cada cluster
         Point *subset = array(Point, &my_allocator); // creamos un sub conjunto de puntos {}
         array_append(subset, input[i]); // se agrega el input[i]
         Cluster sub_cluster = {subset, 0}; // cremos el cluster ({p},0)
         array_append(C, sub_cluster); //se añaden los subconjutos con cada punto del input a C
     }//C = {({p1}, 0), ({p2}, 0), ({p3}, 0) ...}
     while(array_length(C) > 1) { //mientras el tamaño de C sea mayor a 1 es decir mientras podemos separar
-        ClosestPoints closest_points = closest(C_prima,array_length(C_prima));  //primero buscamos el par de medoides mas cercanos en cprima
-        Cluster cluster1,cluster2; //luego buscamos a que cluster corresponden
-        for (int i = 0; i<array_length(C); i++) {
-            if (compare(*C[i].array,closest_points.point1)) { //funciona?? accede a valor del punto
-                cluster1 = C[i];
-            }
-            else if (compare(*C[i].array,closest_points.point2)){
-                cluster2 = C[i];
-            }
-        }
+        Cluster *nearest_clusters = nearest_clusters(C);
+        Cluster cluster1 = nearest_clusters[0],cluster2 = nearest_clusters[1]; //luego buscamos a que cluster corresponden
         Cluster c1 = (array_length(cluster1.array) > array_length(cluster2.array))? cluster1: cluster2; //guardamos en c1 el cluster de mayor tamaño
         Cluster c2 = (array_length(cluster1.array) <= array_length(cluster2.array))? cluster1: cluster2;
         if (array_length(c1.array) + array_length(c2.array) <=B) { //si la suma de tamaño de arreglos es menor a lo q cabe en un bloque
@@ -144,15 +153,18 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
         }
         else {
             cluster_remove(c1,C); //si no quitamos el mas grande
-            array_append(Cout_medoids, c1.array[c1.index_primary_medoide]);
             array_append(Cout,c1); //y lo agregamos solito a c
         }
     }
     Cluster c = C[0]; //se define c como el unico elemento que queda en c
     Cluster *c_prima = NULL; //iniciamos c prima nulo
     if (array_length(Cout) >0) { //si el tamaño de cout es mayor a 0
-        *c_prima = cluster_nearest_neighbor(Cout,c, Cout_medoids); //buscamos en cout el vecino mas cercano a c
+        *c_prima = cluster_nearest_neighbor(Cout,c); //buscamos en cout el vecino mas cercano a c
         cluster_remove(*c_prima,Cout);
+    }
+    else {
+        Cluster c_pivote = {array(Point,&my_allocator)};
+        *c_prima = c_pivote;
     }
     if ((array_length(c.array) + array_length(c_prima->array))<=B) {
         Cluster new_cluster = cluster_union(c,*c_prima);
@@ -164,7 +176,7 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
         array_append(Cout,c1);
         array_append(Cout,c2);
     }
-    return Cout;
+    return Cout; //{ ({p1,p2,3},0),({p4,5},1)...}
 }
 /**
  *  @brief  Función que retorna todos los puntos de un arreglo de entries
