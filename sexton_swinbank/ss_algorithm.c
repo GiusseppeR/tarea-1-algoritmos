@@ -178,7 +178,15 @@ static Entry internal(Tree* c_mra) {
     return result;
 }
 
+Entry * entry_filter(Cluster c, Entry *p) {
+    Entry * final = array(Entry, &my_allocator);
+
+}
+
 static Tree * sexton_swinbank(Point * c_in) {
+    /*
+     * Caso base
+     */
     if (array_length(c_in)<=B) {
         Tree * final_tree = array(Tree,&my_allocator);
         const Entry final = leaf(c_in);
@@ -186,16 +194,31 @@ static Tree * sexton_swinbank(Point * c_in) {
         return final_tree;
     }
     Cluster * c_out = cluster(c_in);
-    Entry * c = array(Entry, &my_allocator);
+    Entry * c_entries = array(Entry, &my_allocator);
     for (int i = 0; i<array_length(c_out); i++) {
-        array_append(c,leaf(c_out[i].array));
+        array_append(c_entries,leaf(c_out[i].array));
     }
-    while (array_length(c) > B) {
-        Point * c_in_2 = entries_get_points(c);
+    Tree c = {1,array_length(c_entries),c_entries,NULL};
+    while (c.size > B) {
+        c_in = entries_get_points(c.entries);
+        c_out = cluster(c_in);
+        Entry ** c_mra = array(Entry *,&my_allocator);
+        for (int i=0; i<array_length(c_out);i++) {
+            Entry * s = entry_filter(c_out[i],c.entries);
+            if (s != NULL)
+                array_append(c_mra,s);
+        }
+        c.size = 0;
+        array_free(c.entries);
+        c.entries = array(Entry,&my_allocator);
+        for (int i = 0; i<array_length(c_mra);i++) {
+            array_append(c.entries,internal(c_mra[i]));
+        }
+        c.size = array_length(c.entries);
+        c.height+=1;
     }
-    Tree *final_tree = array(Tree,&my_allocator);
-    Tree tree = {0,array_length(c),c,NULL};
-    array_append(final_tree,tree);
-    Entry final_entry = internal(final_tree);
-    return final_entry.subTree;
+    const Entry final_entry = internal(&c);
+    Entry *final_entry_ptr = malloc(sizeof(Entry));
+    *final_entry_ptr = final_entry;
+    return final_entry_ptr->subTree;
 }
