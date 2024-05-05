@@ -222,17 +222,17 @@ static Tree * sexton_swinbank(Point * c_in) {
     while (c.size > B) {
         c_in = entries_get_points(c.entries);
         c_out = cluster(c_in);
-        Entry ** c_mra = array(Entry *,&my_allocator);
+        Tree * c_mra = array(Tree ,&my_allocator); //ver sis e pueden cambiar por trees
         for (int i=0; i<array_length(c_out);i++) {
             Entry * s = entry_filter(c_out[i],c.entries);
-            if (s != NULL)
-                array_append(c_mra,s);
+            Tree s_tree = {c.height,array_length(s), s,NULL};
+            array_append(c_mra,s_tree);
         }
         c.size = 0;
         array_free(c.entries);
         c.entries = array(Entry,&my_allocator);
         for (int i = 0; i<array_length(c_mra);i++) {
-            array_append(c.entries,internal(c_mra[i]));
+            array_append(c.entries,internal(&c_mra[i]));
         }
         c.size = array_length(c.entries);
         c.height+=1;
