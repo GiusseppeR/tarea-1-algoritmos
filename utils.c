@@ -6,6 +6,11 @@
 #include <float.h>
 #include <stdlib.h>
 
+Allocator my_allocator = {my_alloc, my_free, 0};
+//meter al utils
+int compare(Point p1, Point p2) {
+    return (p1.x == p2.x) & (p1.y == p2.y);
+}
 Point generateRandomPoint(){
     Point *output = malloc(sizeof(Point) );
     output->x = xoshiro256plus_next();
@@ -131,11 +136,30 @@ float closestUtil(Point P[], int n)
 
 // The main function that finds the smallest distance
 // This method mainly uses closestUtil()
-ClosestPoints closest(Point P[], int n)
-{
+ClosestPoints closest(Point P[], int n){
     qsort(P, n, sizeof(Point), compareX);
 
     // Use recursive function closestUtil() to find the smallest distance
     closestUtil(P, n);
     return closestPair;
+}
+Cluster * nearest_clusters(Cluster * clusters) {
+    Point * medoide_array = array(Point,&my_allocator);
+    for (int i = 0; i<array_length(clusters);i++) {
+        array_append(medoide_array,clusters[i].array[clusters[i].index_primary_medoide]);
+    }
+    ClosestPoints points = closest(medoide_array, array_length(medoide_array));
+    Cluster * nearest_clusters = malloc(sizeof(Cluster)*2);
+    int flag1 = TRUE, flag2= TRUE;
+    for (int i = 0; i<array_length(clusters); i++) {
+        if (compare(nearest_clusters[i].array[nearest_clusters->index_primary_medoide],points.point1) & flag1) {
+            nearest_clusters[0] = nearest_clusters[i];
+            flag1 = FALSE;
+        }
+        else if(compare(nearest_clusters[i].array[nearest_clusters->index_primary_medoide],points.point1) & flag2) {
+            nearest_clusters[1] = nearest_clusters[i];
+            flag2 = FALSE;
+        }
+    }
+    return nearest_clusters;
 }
