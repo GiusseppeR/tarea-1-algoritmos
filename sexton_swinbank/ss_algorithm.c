@@ -163,7 +163,7 @@ Point * entries_get_points(Entry * entries) {
 /**
  * @brief Función que retorna un entry (G,R,A)
  */
-static Entry intern_leaf(Tree* c_mra) {
+static Entry internal(Tree* c_mra) {
     Point * c_in = entries_get_points(c_mra->entries); // Agrupo solo los puntos de las entries
     Point g = primaryMedoide(c_in); // Encuentro el medoide primario de este
     double r = 0.0; // Seteo el radio en 0
@@ -177,3 +177,24 @@ static Entry intern_leaf(Tree* c_mra) {
     return result;
 }
 
+static Tree * sexton_swinbank(Point * c_in) {
+    if (array_length(c_in)<=B) {
+        Tree * final_tree = array(Tree,&my_allocator);
+        const Entry final = leaf(c_in);
+        array_append(final_tree,*final.subTree);
+        return final_tree;
+    }
+    Cluster * c_out = cluster(c_in);
+    Entry * c = array(Entry, &my_allocator);
+    for (int i = 0; i<array_length(c_out); i++) {
+        array_append(c,leaf(c_out[i].array));
+    }
+    while (array_length(c) > B) {
+        Point * c_in_2 = entries_get_points(c);
+    }
+    Tree *final_tree = array(Tree,&my_allocator);
+    Tree tree = {0,array_length(c),c,NULL};
+    array_append(final_tree,tree);
+    Entry final_entry = internal(final_tree);
+    return final_entry.subTree;
+}
