@@ -120,14 +120,13 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
     Cluster *Cout = array(Cluster, &my_allocator); //array de puntos cout
     Point *C_prima = array(Point, &my_allocator);
     Point *Cout_medoids = array(Point, &my_allocator);
-    long int n = array_length(input);
-    for(int i=0; i < n; i++) {
+    for(int i=0; i < array_length(input); i++) {
         array_append(C_prima, input[i]); //en c prima guardaremos los medoides de cada cluster
         Point *subset = array(Point, &my_allocator); // creamos un sub conjunto de puntos {}
         array_append(subset, input[i]); // se agrega el input[i]
-        Cluster sub_cluster = {subset, i}; // cremos el cluster {[]}
+        Cluster sub_cluster = {subset, 0}; // cremos el cluster ({p},0)
         array_append(C, sub_cluster); //se añaden los subconjutos con cada punto del input a C
-    }//C = {{p1, 0}, {p2, 0}, {p3, 0} ...}
+    }//C = {({p1}, 0), ({p2}, 0), ({p3}, 0) ...}
     while(array_length(C) > 1) { //mientras el tamaño de C sea mayor a 1 es decir mientras podemos separar
         ClosestPoints closest_points = closest(C_prima,array_length(C_prima));  //primero buscamos el par de medoides mas cercanos en cprima
         Cluster cluster1,cluster2; //luego buscamos a que cluster corresponden
