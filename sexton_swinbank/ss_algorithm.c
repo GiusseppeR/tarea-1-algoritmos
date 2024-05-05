@@ -67,13 +67,13 @@ void cluster_remove(Cluster c1, Cluster *c2) {
     }
 }
 
-Point find_closest_to(Point * points, Point pivot) {
+int find_closest_to(Point * points, Point pivot) {
     int min =INFINITY;
-    Point closest = {0,0};
+    int closest = 0;
     for(int i=0; i < array_length(points); i++) {
         if(squaredDistance(points[i], pivot) < min) {
             min = squaredDistance(points[i], pivot);
-            closest= points[i];
+            closest= i;
         }
     }
     return closest;
@@ -111,8 +111,47 @@ Point * get_clusters_points(Cluster c1, Cluster c2) {
     return all_points;
 }
 
-double cluster_covering_radio(Cluster c);
-Cluster * make_cluster(Point p1, Point p2, Point * points);
+double cluster_covering_radius(Cluster c) {
+    Point medoide = c.array[c.index_primary_medoide];
+    double radius = 0;
+    for (int i=0; i<array_length(c.array);i++) {
+        double distance = squaredDistance(medoide,c.array[i]);
+        radius = (distance>radius)? distance : radius;
+    }
+    return radius;
+}
+
+Cluster * make_cluster(Point p1, Point p2, Point * points) {
+    Point * c1_points = array(Point,&my_allocator);
+    Point * c2_points = array(Point,&my_allocator);
+    Point * points_copy = array(Point, &my_allocator);
+    for (int i=0; i<array_length(points_copy); i++) {
+        array_append(points_copy,points[i]);
+    }
+    int flag = TRUE;
+    array_append(c1_points,p1);
+    array_append(c2_points,p2);
+    while (array_length(points_copy)!=0) {
+        if (flag) {
+            int index = find_closest_to(points_copy,p1);
+            array_append(c1_points,points[index]);
+            array_remove(points_copy,index);
+            flag = FALSE;
+        }
+        else {
+            int index = find_closest_to(points_copy,p2);
+            array_append(c2_points,points[index]);
+            array_remove(points_copy,index);
+            flag = TRUE;
+        }
+    }
+    Cluster c1 = {c1_points,0};
+    Cluster c2 = {c2_points, 0};
+    Cluster *clusters = (Cluster *)malloc(sizeof(Cluster)*2);
+    clusters[0] = c1;
+    clusters[1] = c2;
+    return clusters;
+}
 /* input: c1,c2 clusters
  *  1. all_points como todos los puntos en c1 y c2
  *  2. liberamos memoria de c1 y c2
@@ -136,15 +175,19 @@ Cluster *min_max_policy(Cluster c1, Cluster c2) {
             random_points[1] = all_points[j];
             Cluster *clusters;
             clusters = make_cluster(random_points[0],random_points[1],all_points);
-            double r1 = cluster_covering_radio(result[0]);
-            double r2 = cluster_covering_radio(result[1]);
+            double r1 = cluster_covering_radius(clusters[0]);
+            double r2 = cluster_covering_radius(clusters[1]);
             double r_max = (r1>r2)? r1:r2;
-            if (r_max<r_min_max & j!=1 ) {
+            if (j == 1) {
+                r_min_max = r_max;
+                result = clusters;
+            }
+            if (r_max<r_min_max) {
                 free(result[0].array);
                 free(result[1].array);
+                r_min_max = r_max;
+                result = clusters;
             }
-            r_min_max = r_max;
-            result = clusters;
             j++;
         }
     }
