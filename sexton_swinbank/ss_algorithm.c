@@ -42,12 +42,12 @@ static Entry leaf(Point * input){
     array_append(C.parent,ret);
     return ret; //se retorna
 }
-
+//VER LOS FREE
 Cluster cluster_union(Cluster c1, Cluster c2) {
     Point * points = get_clusters_points(c1,c2);
     Point medoid = primaryMedoide(points);
     int index_medoid = 0;
-    for (int i=0; array_length(points); i++) {
+    for (int i=0; i < array_length(points); i++) {
         if (compare(medoid,points[i])) {
             index_medoid = i;
         }
@@ -241,23 +241,27 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
         array_append(C, sub_cluster); //se añaden los subconjutos con cada punto del input a C
     }//C = {({p1}, 0), ({p2}, 0), ({p3}, 0) ...}
     while(array_length(C) > 1) { //mientras el tamaño de C sea mayor a 1 es decir mientras podemos separar
+        printf("Yoinks1\n"); // LO DEJAMOS AQUIIIII
         Cluster *nearest_clusters_values = nearest_clusters(C);
         Cluster cluster1 = nearest_clusters_values[0],cluster2 = nearest_clusters_values[1]; //luego buscamos a que cluster corresponden
         Cluster c1 = (array_length(cluster1.array) > array_length(cluster2.array))? cluster1: cluster2; //guardamos en c1 el cluster de mayor tamaño
         Cluster c2 = (array_length(cluster1.array) <= array_length(cluster2.array))? cluster1: cluster2;
+        printf("Yoinksantes\n");
         if (array_length(c1.array) + array_length(c2.array) <=B) { //si la suma de tamaño de arreglos es menor a lo q cabe en un bloque
             cluster_remove(c1,C); //sacamos los clusters de c
             cluster_remove(c2,C);
-            printf("Yoinks1\n"); // LO DEJAMOS AQUIIIII
             Cluster new_cluster = cluster_union(c1,c2); //los unimos
             array_append(C,new_cluster); //y los añadimos unidos a c
+            printf("Yoinksif\n"); // LO DEJAMOS AQUIIIII
         }
         else {
+            printf("Yoinkselse\n");
             cluster_remove(c1,C); //si no quitamos el mas grande
             array_append(Cout,c1); //y lo agregamos solito a c
 
         }
     }
+    printf("Yoinksq\n");
     Cluster c = C[0]; //se define c como el unico elemento que queda en c
     Cluster *c_prima = NULL; //iniciamos c prima nulo
     if (array_length(Cout) >0) { //si el tamaño de cout es mayor a 0
