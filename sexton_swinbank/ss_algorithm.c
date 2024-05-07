@@ -334,6 +334,8 @@ Tree * sexton_swinbank(Point * input) {
         Tree * final_tree = array(Tree,&my_other_allocator);
         const Entry final = leaf(input);
         array_append(final_tree,*final.subTree);
+        final_tree->height=1;
+        final_tree->size = array_length(input);
         return final_tree;
     }
     printf("Salta el caso base\n");
