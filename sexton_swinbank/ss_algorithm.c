@@ -11,7 +11,7 @@ Allocator my_other_allocator = {my_alloc, my_free, 0};
 void show_cluster(Cluster c);
 static Point * get_clusters_points(Cluster c1, Cluster c2);
 //funcion para definir medoide primario
-static Point primaryMedoide(Point * input) {
+static Point primary_medoide(Point * input) {
     double min =INFINITY; //iniciamos un min
     Point medoide={0,0};
     for(int i=0; i < array_length(input); i++) {
@@ -29,7 +29,7 @@ static Point primaryMedoide(Point * input) {
 
 //Metodo para output hoja
 static Entry leaf(Point * input){
-    Point g = primaryMedoide(input); //medoide primario de input
+    Point g = primary_medoide(input); //medoide primario de input
     double r = 0; //radio
     Tree C = {1, 0, (Entry*)array(Entry,&my_other_allocator),NULL};
     for(int i = 0; i < array_length(input); i++){ //para cada punto del input
@@ -65,7 +65,7 @@ static Cluster cluster_union(Cluster c1, Cluster c2) {
     }
 
     Point * points = get_clusters_points(c1,c2);
-    Point medoid = primaryMedoide(points);
+    Point medoid = primary_medoide(points);
     int index_medoid = 0;
     for (int i=0; i < array_length(points); i++) {
         if (compare(medoid,points[i])) {
@@ -387,7 +387,7 @@ static Point * entries_get_points(Entry * entries) {
 static Entry internal(Tree* c_mra) {
     printf("Internal 1.\n");
     Point * c_in = entries_get_points(c_mra->entries); // Agrupo solo los puntos de las entries
-    Point g = primaryMedoide(c_in); // Encuentro el medoide primario de este
+    Point g = primary_medoide(c_in); // Encuentro el medoide primario de este
     double r = 0.0; // Seteo el radio en 0
     printf("Internal 2.\n");
     printf("c_mra tamano: %lu y c_in tamano: %lu",array_length(c_mra->entries),array_length(c_in));
