@@ -358,19 +358,24 @@ static Entry internal(Tree* c_mra) {
     for (int i = 0; i<array_length(c_in); i++) {
         r = fmax(r,squaredDistance(g,c_in[i]) + c_mra->entries[i].radius); // Voy actualizando la R con cada punto de c_in
     }
-    Entry result = {g,r,c_mra}; // Creo el entry de salida
-    Entry * c = array(Entry,&my_other_allocator); // creo el arreglo final
-    array_append(c,result); // añado el resultado al arreglo c, que va a corresponder al padre del nodo
-    c_mra->parent = c; // seteo c como el padre del arreglo de entries c_mra
-    return result;
+    Entry * result = (Entry *)malloc(sizeof(Entry));
+    result->point = g;
+    result->radius = r;
+    result->subTree = c_mra;
+    c_mra->parent = result; // seteo c como el padre del arreglo de entries c_mra
+    return *result;
 }
 
 static Entry * entry_filter(Cluster c, Entry *p) {
     Entry * final = array(Entry, &my_other_allocator);
     for (int i = 0; array_length(c.array); i++) {
         for (int j = 0; array_length(p);j++) {
-            if (&c.array[i] == &p[j].point) {
-                array_append(final,p[j]);
+            if (compare(c.array[i],p[j].point)) {
+                Entry *entry = (Entry *)malloc(sizeof(Entry));
+                entry->point = p[j].point;
+                entry->radius = p[j].radius;
+                entry->subTree = p[j].subTree;
+                array_append(final,*entry);
                 break;
             }
         }
@@ -392,18 +397,31 @@ Tree * sexton_swinbank(Point * input) {
     c->size = array_length(c_entries);
     c->entries = c_entries;
     c->parent = NULL;
-    while (c->size > B) {
-        input = entries_get_points(c->entries);
-        c_out = cluster(input);
+    while (c->size > B) { //GENERAR ALTURAS
+        input = entries_get_points(c->entries); //redefino el input
+        c_out = cluster(input); //redefino cout
         Tree * c_mra = array(Tree ,&my_other_allocator); //ver sis e pueden cambiar por trees
-        for (int i=0; i<array_length(c_out);i++) {
-            Entry * s = entry_filter(c_out[i],c->entries);
-            Tree s_tree = {c->height,array_length(s), s,NULL};
-            array_append(c_mra,s_tree);
+        for (int i=0; i<array_length(c_out);i++) { //c_out[i] es c de cluster en cout
+            Tree *s_tree = malloc(sizeof(Tree));
+            s_tree->height = c->height;
+            s_tree->size = 0;
+            s_tree->entries = (Entry *)array(Entry,&my_other_allocator);
+            s_tree->parent = NULL;
+            for (int j = 0; j<array_length(c_out);j++) {
+                for(int k = 0; k<array_length(c->entries);k++) {
+                    if (compare(c->entries[k].point,c_out[i].array[j])) {
+                        Entry entry = {c->entries[k].point,c->entries[k].radius,c->entries[k].subTree};
+                        array_append(s_tree->entries,entry);
+                    }
+                }
+            }
+            s_tree->size = array_length(s_tree->entries);
+            array_append(c_mra,*s_tree);
         }
         c->size = 0;
-        array_free(c->entries);
+        Entry * entrie_pivote = c->entries;
         c->entries = array(Entry,&my_other_allocator);
+        //array_free(entrie_pivote);
         for (int i = 0; i<array_length(c_mra);i++) {
             array_append(c->entries,internal(&c_mra[i]));
         }
