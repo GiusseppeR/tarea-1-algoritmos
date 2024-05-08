@@ -142,3 +142,20 @@ ClosestPoints closest(Point P[], int n){
     closestUtil(P, n);
     return closestPair;
 }
+
+void show_tree(Tree* tree_ss) {
+    printf("Dentro de showfree!\n");
+    if (tree_ss == NULL) {
+        printf("Lol\n");
+        return;
+    }
+    printf("Tree size: %d y tree largo de entries: %lu\n",tree_ss->size,array_length(tree_ss->entries));
+    for (int i = 0; i<tree_ss->size;i++) {
+        printf("Entry %d:\n", i + 1);
+        printf("Point: (%f, %f)\n", tree_ss->entries[i].point.x, tree_ss->entries[i].point.y);
+        printf("Radius: %.2f\n", tree_ss->entries[i].radius);
+        // Recursivamente imprimimos las entradas del subárbol
+        show_tree(tree_ss->entries[i].subTree);
+    }
+
+}
