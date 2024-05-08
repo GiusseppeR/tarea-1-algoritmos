@@ -19,20 +19,6 @@ void query(const Tree tree, const Point point, const double radius, Point ** res
     }
 }
 
-void show_tree(Tree* tree_ss) {
-    if (tree_ss == NULL) {
-        return;
-    }
-    for (int i = 0; i<tree_ss->size;i++) {
-        printf("Entry %d:\n", i + 1);
-        printf("Point: (%f, %f)\n", tree_ss->entries[i].point.x, tree_ss->entries[i].point.y);
-        printf("Radius: %.2f\n", tree_ss->entries[i].radius);
-        // Recursivamente imprimimos las entradas del subárbol
-        show_tree(tree_ss->entries[i].subTree);
-    }
-
-}
-
 //cambiarle la firma a hundred_queries(Tree tree_cp, Tree tree_ss, int n)
 static void hundred_queries(Tree tree_cp, Tree tree_ss  ,int n){
     for(int i = 0; i < 100; i++){
@@ -54,7 +40,6 @@ static void hundred_queries(Tree tree_cp, Tree tree_ss  ,int n){
         int accesses_ss = 0; //accesos en árbol ss
         //Query para árbol ss:
         query(tree_ss, center, 0.02, &results_ss, &accesses_ss);
-        printf("Aqui muere!\n");
         printf("Query %i finished:\n",i + 1);
         printf("accesses_ss = %i\n", accesses_ss);
         printf("points = %zu\n", array_length(results_ss));
@@ -88,14 +73,13 @@ void generate_experiment(){
 
         Tree * tree_ss = sexton_swinbank(input);
 
-        printf("Mostrar arbol ss\n");
-        show_tree(tree_ss);
+        printf("primer entry (%f,%f)\n",tree_ss->entries[0].point.x,tree_ss->entries[0].point.y);
 
         printf("Tree of height %i built using Sexton-Swinbank.\n", tree_ss->height);
 
         printf("starting queries...\n");
 
-        hundred_queries(*tree_cp, *tree_ss, n);
+        //hundred_queries(*tree_cp, *tree_ss, n);
 
         clock_gettime(CLOCK_MONOTONIC,&t2);
 
