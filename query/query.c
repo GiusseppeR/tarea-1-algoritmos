@@ -28,7 +28,7 @@ static void hundred_queries(Tree tree,int n){
 
         query(tree, center, 0.02, &results, &accesses);
         printf("Query %i finished:\n",i + 1);
-        printf("accesses_cp = %i\n", accesses);
+        printf("accesses = %i\n", accesses);
         printf("points = %zu\n", array_length(results));
         printf("point percentage = %f \n", (double)array_length(results) / (double)n * 100);
         printf("\n");
@@ -115,6 +115,6 @@ void genarate_experiment_ss() {
 }
 
 void generate_experiment(){
-    genarate_experiment_cp();
+    //genarate_experiment_cp();
     genarate_experiment_ss();
 }
