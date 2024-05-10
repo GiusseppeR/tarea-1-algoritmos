@@ -36,6 +36,7 @@ typedef struct closestPoints {
     Point point2;
     float distance;
 }ClosestPoints;
+
 Tree * ciaccia_patella(Point * input);
 Tree * sexton_swinbank(Point * input);
 void free_tree(Tree *tree);
