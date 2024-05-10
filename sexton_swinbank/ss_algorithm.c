@@ -8,7 +8,7 @@
 #include "../random/custom_random.h"
 
 Allocator my_other_allocator = {my_alloc, my_free, 0};
-void show_cluster(Cluster c);
+
 static Point * get_clusters_points(Cluster c1, Cluster c2);
 
 /**
@@ -16,11 +16,11 @@ static Point * get_clusters_points(Cluster c1, Cluster c2);
  */
 static Point primary_medoide(Point * input) {
     if (array_length(input)<3) {
-        const Point medoide = {input[0].x,input[0].y};
+        const Point medoide = {input[0].x,input[0].y,0};
         return medoide;
     }
     double min =INFINITY; //iniciamos un min
-    Point medoide={0,0};
+    Point medoide={0,0,0};
     for(int i=0; i < array_length(input); i++) {
         double dist=0; //iniciamos la distancia para actualizarla
         for(int k=0; k < array_length(input); k++ ) {
@@ -39,13 +39,18 @@ static Point primary_medoide(Point * input) {
 static Point * copy_array(Point * points) {
     Point * final = array(Point,&my_other_allocator);
     for (int i = 0; i<array_length(points); i++) {
-        Point p = {points[i].x,points[i].y};
+        Point p = {points[i].x,points[i].y,0};
         array_append(final,p);
     }
     return final;
 }
 
 static Cluster cluster_union(Cluster c1, Cluster c2) {
+    if (array_length(c2.array) == 0) {
+        Point * points = get_clusters_points(c1,c2);
+        Cluster cluster_res = {points,c1.index_primary_medoide};
+        return cluster_res;
+    }
     Point * points = get_clusters_points(c1,c2);
     Point medoid = primary_medoide(points);
     int index_medoid = 0;
@@ -56,29 +61,6 @@ static Cluster cluster_union(Cluster c1, Cluster c2) {
     }
     Cluster cluster_res = {points,index_medoid};
     return cluster_res;
-}
-
-static int compare_clusters(Cluster c1, Cluster c2) {
-    if (array_length(c1.array) != array_length(c2.array)) {
-        return FALSE;
-    }
-    for (int i = 0; i<array_length(c1.array); i++) {
-        if (!compare(c1.array[i],c2.array[i])) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-/**
- * @brief Remueve el cluster c1 del arreglo de clusters c2
- */
-static void cluster_remove(Cluster c1, Cluster *c2) {
-    for (int i=0; i < array_length(c2); i++) {
-        if (compare_clusters(c2[i],c1)) {
-            array_remove(c2,i);
-            break;
-        }
-    }
 }
 
 static int find_closest_to(Point * points, Point pivot) {
@@ -94,15 +76,15 @@ static int find_closest_to(Point * points, Point pivot) {
 }
 
 //funcion para buscar el vecino mas cercano a c en cout
-static Cluster cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
-    Cluster nearest_to_c = {NULL,0};
+static int cluster_nearest_neighbor(Cluster * Cout, Cluster c) {
+    int nearest_to_c = 0;
     float min = INFINITY;
     Point c_medoid= c.array[c.index_primary_medoide]; //guardamos su medoide
     //ahora en los medoides de Cout q son los guardados en C_prima queremos encontrar el cluster mas cercano a c
     for (int i=0;i<array_length(Cout);i++) {
         float new_min = squaredDistance(Cout[i].array[Cout[i].index_primary_medoide],c_medoid);
         if ( new_min < min) {
-            nearest_to_c = Cout[i];
+            nearest_to_c = i;
             min = new_min;
         }
     }
@@ -116,11 +98,11 @@ static Point * get_clusters_points(Cluster c1, Cluster c2) {
     int n = (c1_lenght>c2_lenght) ? c1_lenght : c2_lenght;
     for (int i = 0; i<n; i++) {
         if (i<c1_lenght) {
-            Point p = {c1.array[i].x,c1.array[i].y};
+            Point p = {c1.array[i].x,c1.array[i].y,0};
             array_append(all_points,p);
         }
         if (i<c2_lenght) {
-            Point p = {c2.array[i].x,c2.array[i].y};
+            Point p = {c2.array[i].x,c2.array[i].y,0};
             array_append(all_points,p);
         }
     }
@@ -141,22 +123,25 @@ static Cluster * make_cluster(Point p1, Point p2, Point * points) {
     Point * c1_points = array(Point,&my_other_allocator);
     Point * c2_points = array(Point,&my_other_allocator);
     Point * points_copy = array(Point, &my_other_allocator);
-    for (int i=0; i<array_length(points_copy); i++) {
+    array_append(c1_points,p1);
+    array_append(c2_points,p2);
+    for (int i=0; i<array_length(points); i++) {
+        if (compare(p1,points[i]) || compare(p2,points[i])) {
+            continue;
+        }
         array_append(points_copy,points[i]);
     }
     int flag = TRUE;
-    array_append(c1_points,p1);
-    array_append(c2_points,p2);
     while (array_length(points_copy)!=0) {
         if (flag) {
             int index = find_closest_to(points_copy,p1);
-            array_append(c1_points,points[index]);
+            array_append(c1_points,points_copy[index]);
             array_remove(points_copy,index);
             flag = FALSE;
         }
         else {
             int index = find_closest_to(points_copy,p2);
-            array_append(c2_points,points[index]);
+            array_append(c2_points,points_copy[index]);
             array_remove(points_copy,index);
             flag = TRUE;
         }
@@ -166,6 +151,7 @@ static Cluster * make_cluster(Point p1, Point p2, Point * points) {
     Cluster *clusters = (Cluster *)malloc(sizeof(Cluster)*2);
     clusters[0] = c1;
     clusters[1] = c2;
+    array_free(points_copy);
     return clusters;
 }
 /* input: c1,c2 clusters
@@ -187,20 +173,25 @@ static Cluster *min_max_policy(Cluster c1, Cluster c2) {
         while (j < array_length(all_points)) {
             random_points[0] = all_points[i];
             random_points[1] = all_points[j];
-            Cluster *clusters;
-            clusters = make_cluster(random_points[0],random_points[1],all_points);
+            Cluster *clusters = make_cluster(random_points[0],random_points[1],all_points);
             double r1 = cluster_covering_radius(clusters[0]);
             double r2 = cluster_covering_radius(clusters[1]);
             double r_max = (r1>r2)? r1:r2;
             if (j == 1) {
                 r_min_max = r_max;
-                result = clusters;
+                result[0]= clusters[0];
+                result[1] = clusters[1];
             }
-            if (r_max<r_min_max) {
-                //free(result[0].array);
-                //free(result[1].array);
+            else if (r_max<r_min_max) {
+                array_free(result[0].array);
+                array_free(result[1].array);
                 r_min_max = r_max;
-                result = clusters;
+                result[0]= clusters[0];
+                result[1] = clusters[1];
+            }
+            else {
+                array_free(clusters[0].array);
+                array_free(clusters[1].array);
             }
             j++;
         }
@@ -241,16 +232,6 @@ static int * nearest_clusters(Cluster * clusters) {
     return indices;
 }
 
-/*
- * Metodo para ver el contenido de un cluster
-*/
-void show_cluster(Cluster c) {
-    printf("Elementos del cluster: {");
-    for (int i = 0; i<array_length(c.array);i++) {
-        printf(" (%f,%f)",c.array[i].x,c.array[i].y);
-    }
-    printf("} medoide primario: (%f,%f) \n",c.array[c.index_primary_medoide].x,c.array[c.index_primary_medoide].y);
-}
 
 //Metodo para Cluster
 static Cluster * cluster(Point* input) { // ver si nos dan "n"
@@ -289,16 +270,16 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
 
         }
     }
-
     Cluster c = C[0]; //se define c como el unico elemento que queda en c
     Cluster *c_prima = array(Cluster,&my_other_allocator); //iniciamos c prima nulo
-    if (array_length(Cout) >0) { //si el tamaño de cout es mayor a 0
-        Cluster c_pivote = cluster_nearest_neighbor(Cout,c); //buscamos en cout el vecino mas cercano a c
-        array_append(c_prima,c_pivote);
-        cluster_remove(c_pivote,Cout);
+    if (array_length(Cout) >0) {
+        //si el tamaño de cout es mayor a 0
+        int nearest_i = cluster_nearest_neighbor(Cout,c); //buscamos en cout el vecino mas cercano a c
+        array_append(c_prima,Cout[nearest_i]);
+        array_remove(Cout,nearest_i);
     }
     else {
-        Cluster c_pivote = {array(Point,&my_other_allocator),0};
+        Cluster c_pivote = {(Point *)array(Point,&my_other_allocator),0};
         array_append(c_prima,c_pivote);
     }
     if ((array_length(c.array) + array_length(c_prima[0].array))<=B) {
@@ -311,6 +292,10 @@ static Cluster * cluster(Point* input) { // ver si nos dan "n"
         array_append(Cout,c1);
         array_append(Cout,c2);
     }
+    array_remove(C,0);
+    array_free(C);
+    array_free(c_prima[0].array);
+    array_free(c_prima);
     return Cout; //{ ({p1,p2,3},0),({p4,5},1)...}
 }
 /**
@@ -324,7 +309,6 @@ static Point * entries_get_points(Entry * entries) {
     return points;
 }
 
-//Metodo para output hoja
 static Entry leaf(Point * input){
     Point g = primary_medoide(input); //medoide primario de input
     double r = 0; //radio
@@ -358,30 +342,11 @@ static Entry internal(Tree* c_mra) {
     for (int i = 0; i<array_length(c_in); i++) {
         r = fmax(r,squaredDistance(g,c_in[i]) + c_mra->entries[i].radius); // Voy actualizando la R con cada punto de c_in
     }
-    Entry * result = (Entry *)malloc(sizeof(Entry));
-    result->point = g;
-    result->radius = r;
-    result->subTree = c_mra;
-    c_mra->parent = result; // seteo c como el padre del arreglo de entries c_mra
-    return *result;
+    Entry result = {g,r,c_mra};
+    c_mra->parent = NULL;
+    return result;
 }
 
-static Entry * entry_filter(Cluster c, Entry *p) {
-    Entry * final = array(Entry, &my_other_allocator);
-    for (int i = 0; array_length(c.array); i++) {
-        for (int j = 0; array_length(p);j++) {
-            if (compare(c.array[i],p[j].point)) {
-                Entry *entry = (Entry *)malloc(sizeof(Entry));
-                entry->point = p[j].point;
-                entry->radius = p[j].radius;
-                entry->subTree = p[j].subTree;
-                array_append(final,*entry);
-                break;
-            }
-        }
-    }
-    return final;
-}
 
 Tree * sexton_swinbank(Point * input) {
     if (array_length(input)<=B) {
@@ -399,34 +364,36 @@ Tree * sexton_swinbank(Point * input) {
     c->parent = NULL;
     while (c->size > B) { //GENERAR ALTURAS
         input = entries_get_points(c->entries); //redefino el input
-        c_out = cluster(input); //redefino cout
-        Tree * c_mra = array(Tree ,&my_other_allocator); //ver sis e pueden cambiar por trees
+        c_out = cluster(input); //redefino cout { {array,index} {array,index} {array,index} {array,index}}
+        Tree ** c_mra = array(Tree *,&my_other_allocator); //ver sis e pueden cambiar por trees
         for (int i=0; i<array_length(c_out);i++) { //c_out[i] es c de cluster en cout
             Tree *s_tree = malloc(sizeof(Tree));
             s_tree->height = c->height;
             s_tree->size = 0;
             s_tree->entries = (Entry *)array(Entry,&my_other_allocator);
             s_tree->parent = NULL;
-            for (int j = 0; j<array_length(c_out);j++) {
+
+            for (int j = 0; j<array_length(c_out[i].array);j++) {
                 for(int k = 0; k<array_length(c->entries);k++) {
                     if (compare(c->entries[k].point,c_out[i].array[j])) {
                         Entry entry = {c->entries[k].point,c->entries[k].radius,c->entries[k].subTree};
                         array_append(s_tree->entries,entry);
+                        break;
                     }
                 }
             }
             s_tree->size = array_length(s_tree->entries);
-            array_append(c_mra,*s_tree);
+            array_append(c_mra,s_tree);
         }
         c->size = 0;
         Entry * entrie_pivote = c->entries;
         c->entries = array(Entry,&my_other_allocator);
-        //array_free(entrie_pivote);
         for (int i = 0; i<array_length(c_mra);i++) {
-            array_append(c->entries,internal(&c_mra[i]));
+            array_append(c->entries,internal(c_mra[i]));
         }
         c->size = array_length(c->entries);
         c->height+=1;
+        array_free(entrie_pivote);
     }
     return c;
 }
