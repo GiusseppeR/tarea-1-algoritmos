@@ -25,9 +25,6 @@ double squaredDistance(const Point p1, const Point p2){
 // Global variable to store the closest pair of points
 ClosestPoints closestPair;
 
-/* Following two functions are needed for library function qsort().
-   Refer: http://www.cplusplus.com/reference/clibrary/cstdlib/qsort/ */
-
 // Needed to sort array of points according to X coordinate
 int compareX(const void* a, const void* c)
 {
@@ -73,20 +70,12 @@ float min(float x, float y)
 }
 
 
-// A utility function to find the distance between the closest points of
-// strip of a given size. All points in strip[] are sorted according to
-// y coordinate. They all have an upper bound on minimum distance as d.
-// Note that this method seems to be a O(n^2) method, but it's a O(n)
-// method as the inner loop runs at most 6 times
 float stripClosest(Point strip[], int size, float d)
 {
     float min = d;  // Initialize the minimum distance as d
 
     qsort(strip, size, sizeof(Point), compareY);
 
-    // Pick all points one by one and try the next points till the difference
-    // between y coordinates is smaller than d.
-    // This is a proven fact that this loop runs at most 6 times
     for (int i = 0; i < size; ++i)
         for (int j = i+1; j < size && (strip[j].y - strip[i].y) < min; ++j)
             if (dist(strip[i],strip[j]) < min) {
@@ -141,21 +130,4 @@ ClosestPoints closest(Point P[], int n){
     // Use recursive function closestUtil() to find the smallest distance
     closestUtil(P, n);
     return closestPair;
-}
-
-void show_tree(Tree* tree_ss) {
-    printf("Dentro de showfree!\n");
-    if (tree_ss == NULL) {
-        printf("Lol\n");
-        return;
-    }
-    printf("Tree size: %d y tree largo de entries: %lu\n",tree_ss->size,array_length(tree_ss->entries));
-    for (int i = 0; i<tree_ss->size;i++) {
-        printf("Entry %d:\n", i + 1);
-        printf("Point: (%f, %f)\n", tree_ss->entries[i].point.x, tree_ss->entries[i].point.y);
-        printf("Radius: %.2f\n", tree_ss->entries[i].radius);
-        // Recursivamente imprimimos las entradas del subárbol
-        show_tree(tree_ss->entries[i].subTree);
-    }
-
 }
