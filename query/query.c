@@ -115,6 +115,6 @@ void genarate_experiment_ss() {
 }
 
 void generate_experiment(){
-    //genarate_experiment_cp();
+    genarate_experiment_cp();
     genarate_experiment_ss();
 }
