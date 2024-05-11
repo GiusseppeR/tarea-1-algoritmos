@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <conio.h>
 #include <time.h>
 #include "structures.h"
 #include "arrays/array.h"
