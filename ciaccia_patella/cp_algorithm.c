@@ -1,12 +1,11 @@
 #include <math.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "../structures.h"
 #include "../utils.h"
 #include "../arrays/array.h"
 #include "../arrays/matrix.h"
 #include "../trees/2dTrees.h"
 #include "../random/custom_random.h"
-
 Allocator my_allocator = {my_alloc, my_free, 0};
 
 /*            Paso 1            */
