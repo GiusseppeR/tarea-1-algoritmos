@@ -15,20 +15,24 @@ static Point * get_clusters_points(Cluster c1, Cluster c2);
  * @brief Función que retorna el medoide primario dentro de un arreglo de puntos
  */
 static Point primary_medoide(Point * input) {
-    if (array_length(input)<3) {
-        const Point medoide = {input[0].x,input[0].y,0};
-        return medoide;
-    }
-    double min =INFINITY; //iniciamos un min
-    Point medoide={0,0,0};
-    for(int i=0; i < array_length(input); i++) {
-        double dist=0; //iniciamos la distancia para actualizarla
-        for(int k=0; k < array_length(input); k++ ) {
-            dist+= squaredDistance(input[i], input[k]); //agregamos la distancia
+    Point medoide;
+    double min_dist=INFINITY; // inicializar como infinito
+    for (int i = 0; i < array_length(input); i++) {//para cada punto de input
+        double covering_radius = 0;  // inicializar radio cobertor a 0
+        for (int j = 0; j < array_length(input); j++) {
+            // comparamos con todos los demas puntos
+            if (i != j) {
+                double dist = squaredDistance(input[i], input[j]);
+
+                if (covering_radius < dist) { //y si la distancia al punto es mayor a la guardada
+                    covering_radius = dist;  //se actualiza
+                }
+            }
         }
-        if(dist < min){ //si encontramos un nuevo min lo actualizamos y actualizamos el medoide
-            min=dist;
-            medoide= input[i];
+        //al encontrar el radio cobertor para i
+        if (covering_radius < min_dist ) { //si esta distancia era menor a la guardada
+            min_dist = covering_radius;  // se guarda como el menor de los radios cobertores
+            medoide = input[i]; //y se actualiza medoide
         }
     }
     return medoide;
