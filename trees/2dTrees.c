@@ -40,8 +40,10 @@ void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *clo
 
     Point point = *(tree->point);
 
-    if ( (consider_self == FALSE) &&
-    (equals(value, point) == TRUE)){
+    if ( consider_self == FALSE &&
+    equals(value, point) == TRUE){
+        findClosestBT2D(tree->left, value,bestDistance, closest, consider_self);
+        findClosestBT2D(tree->right, value,bestDistance, closest, consider_self);
         return;
     }
 
