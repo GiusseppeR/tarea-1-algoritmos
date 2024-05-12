@@ -1,14 +1,16 @@
 #include "../structures.h"
 #include "../utils.h"
 #include "time.h"
+#include <math.h>
+#include "../arrays/matrix.h"
 
 Allocator alloc = {my_alloc, my_free, 0};
 void query(const Tree tree, const Point point, const double radius, Point ** result, int * accesses){
-    double sqr_radius = radius*radius;
+    double sqr_radius = radius;
     *accesses += 1;
     for (int i = 0; i < tree.size; i++){
         Entry entry = tree.entries[i];
-        double distance = squaredDistance(point, entry.point);
+        double distance = sqrt(squaredDistance(point, entry.point));
         if(distance > sqr_radius + entry.radius)
             continue;
 
@@ -20,101 +22,81 @@ void query(const Tree tree, const Point point, const double radius, Point ** res
 }
 
 //cambiarle la firma a hundred_queries(Tree tree_cp, Tree tree_ss, int n)
-static void hundred_queries(Tree tree,int n){
-    for(int i = 0; i < 100; i++){
-        Point * results = array(Point, &alloc); //arreglo para arbol cp
-        int accesses = 0; //accesos en árbol cp
-        Point center = generateRandomPoint(); //este punto se usa para ambos árboles!!!
-
+static void hundred_queries(Tree tree,int n, Point * input){
+    int mean_accesses = 0;
+    int mean_points = 0;
+    double mean_percentage = 0;
+    for(int i = 0; i < array_length(input); i++){
+        Point * results = array(Point, &alloc);
+        int accesses = 0;
+        Point center = input[i];
         query(tree, center, 0.02, &results, &accesses);
-        printf("Query %i finished:\n",i + 1);
-        printf("accesses = %i\n", accesses);
-        printf("points = %zu\n", array_length(results));
-        printf("point percentage = %f \n", (double)array_length(results) / (double)n * 100);
-        printf("\n");
+        mean_accesses += accesses;
+        mean_points += array_length(results);
+        mean_percentage += (double)array_length(results) / (double)n * 100;
 
         array_free(results);
     }
+    printf("Cantidad de accessos promedio: %i\n", mean_accesses/100);
+    printf("Cantidad de puntos promedio: %i\n", mean_points/100);
+    printf("Porcentaje de cobertura promedio: %f\n", mean_percentage/100);
 }
 
-void genarate_experiment_cp(void) {
-    int input_sizes[] = {1024,2048,4096, 8192, 16384, 32768, 65536, 131072, 262144,
-                         524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432};
-    for(int i = 0; i < 16; i++){
-        int n = input_sizes[i];
+void generate_experiment_cp(Point * input, Point* query_points) {
+    printf("##################################################\n");
+    printf("Utilizando %zu puntos\n", array_length(input));
+    struct timespec t1, t2;
 
-        Point *input = array(Point, &alloc);
+    clock_gettime(CLOCK_MONOTONIC,&t1);
 
-        for(int j = 0; j < n; j++)
-            array_append(input, generateRandomPoint());
+    Tree * tree_cp = ciaccia_patella(input);
 
-        printf("%i random points of double precision generated. \n",n);
-        struct timespec t1, t2;
+    printf("Arbol de tamanno %i construido con Ciaccia-Patella.\n", tree_cp->height);
 
-        clock_gettime(CLOCK_MONOTONIC,&t1);
+    clock_gettime(CLOCK_MONOTONIC,&t2);
 
-        Tree * tree_cp = ciaccia_patella(input);
+    double delta_t;
+    delta_t = (t2.tv_sec - t1.tv_sec) * 1e9;
+    delta_t = (delta_t + (t2.tv_nsec - t1.tv_nsec)) * 1e-9;
 
-        printf("Tree of height %i built using Ciaccia-Patella.\n", tree_cp->height);
+    printf("Tiempo de construccion: %f segundos.\n", delta_t);
+    printf("\n");
 
-        printf("starting queries...\n");
+    printf("Resultados de 100 queries:\n");
 
-        hundred_queries(*tree_cp, n);
+    hundred_queries(*tree_cp, array_length(input), query_points);
 
-        clock_gettime(CLOCK_MONOTONIC,&t2);
-
-        double delta_t;
-        delta_t = (t2.tv_sec - t1.tv_sec) * 1e9;
-        delta_t = (delta_t + (t2.tv_nsec - t1.tv_nsec)) * 1e-9;
-
-        printf("Execution time: %f seconds \n", delta_t);
-        printf("\n");
-
-        free_tree(tree_cp);
-
-        array_free(input);
-    }
-}
-void genarate_experiment_ss() {
-    int input_sizes[] = {1024,2048,4096, 8192, 16384, 32768};
-    for(int i = 0; i < 6; i++){
-        int n = input_sizes[i];
-
-        Point *input = array(Point, &alloc);
-
-        for(int j = 0; j < n; j++)
-            array_append(input, generateRandomPoint());
-
-        printf("%i random points of double precision generated. \n",n);
-        struct timespec t1, t2;
-
-        clock_gettime(CLOCK_MONOTONIC,&t1);
-
-
-        Tree * tree_ss = sexton_swinbank(input);
-
-        printf("Tree of height %i built using Sexton-Swinbank.\n", tree_ss->height);
-
-        printf("starting queries...\n");
-
-        hundred_queries(*tree_ss, n);
-
-        clock_gettime(CLOCK_MONOTONIC,&t2);
-
-        double delta_t;
-        delta_t = (t2.tv_sec - t1.tv_sec) * 1e9;
-        delta_t = (delta_t + (t2.tv_nsec - t1.tv_nsec)) * 1e-9;
-
-        printf("Execution time: %f seconds \n", delta_t);
-        printf("\n");
-
-        free_tree(tree_ss);
-
-        array_free(input);
-    }
+    free_tree(tree_cp);
+    printf("##################################################\n");
+    printf("\n");
 }
 
-void generate_experiment(){
-    //genarate_experiment_cp();
-    genarate_experiment_ss();
+void generate_experiment_ss(Point * input, Point* query_points) {
+    printf("##################################################\n");
+    printf("Utilizando %zu puntos\n", array_length(input));
+    struct timespec t1, t2;
+
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+
+
+    Tree * tree_ss = sexton_swinbank(input);
+
+    printf("Arbol de tamanno %i construido con Sexton-Swinbank.\n", tree_ss->height);
+
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+
+    double delta_t;
+    delta_t = (t2.tv_sec - t1.tv_sec) * 1e9;
+    delta_t = (delta_t + (t2.tv_nsec - t1.tv_nsec)) * 1e-9;
+
+    printf("Tiempo de construccion: %f segundos. \n", delta_t);
+    printf("\n");
+
+    printf("Resultados de 100 queries:\n");
+
+    hundred_queries(*tree_ss, array_length(input), query_points);
+
+    free_tree(tree_ss);
+    printf("##################################################\n");
+    printf("\n");
 }

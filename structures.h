@@ -26,17 +26,6 @@ typedef struct entry{
     Tree* subTree;
 }Entry;
 
-typedef struct cluster{
-    Point *array;
-    int index_primary_medoide;
-} Cluster;
-
-typedef struct closestPoints {
-    Point point1;
-    Point point2;
-    float distance;
-}ClosestPoints;
-
 Tree * ciaccia_patella(Point * input);
 Tree * sexton_swinbank(Point * input);
 void free_tree(Tree *tree);
