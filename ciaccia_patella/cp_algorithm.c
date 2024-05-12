@@ -286,6 +286,9 @@ Tree * ciaccia_patella(Point * input){
         if(success)
             break;
 
+        for(int i = 0; i < array_length(T); i++)
+            (&T[i])->parent = NULL;
+
         free_tree(T_sup);
     }
 
