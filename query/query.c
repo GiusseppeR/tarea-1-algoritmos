@@ -46,8 +46,11 @@ static void hundred_queries(Tree tree,int n, Point * input){
     }
     standar_deviation = sqrt(standar_deviation/ (double)(array_length(values) - 1));
 
+    double confianza1 = mean - 1.96*standar_deviation/sqrt(array_length(values));
+    double confianza2 = mean + 1.96*standar_deviation/sqrt(array_length(values));
+
     printf("Cantidad de accessos promedio: %i\n", mean_accesses/100);
-    printf("Desviacion estandar de accesos: %f\n", standar_deviation);
+    printf("Intervalo de confianza: [%f, %f]\n", confianza1, confianza2);
     printf("Cantidad de puntos promedio: %i\n", mean_points/100);
     printf("Porcentaje de cobertura promedio: %f\n", mean_percentage/100);
 }
