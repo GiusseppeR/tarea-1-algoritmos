@@ -29,6 +29,7 @@ typedef struct entry{
 Tree * ciaccia_patella(Point * input);
 Tree * sexton_swinbank(Point * input);
 void free_tree(Tree *tree);
+void set_height(Tree *T_sup);
 
 #define B (4096/sizeof(Entry))
 #define b (B/2)

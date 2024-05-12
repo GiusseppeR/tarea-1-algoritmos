@@ -8,12 +8,4 @@ typedef struct cluster{
     int index_primary_medoide;
 } Cluster;
 
-typedef struct closestPoints {
-    Point point1;
-    Point point2;
-    double distance;
-}ClosestPoints;
-
-ClosestPoints closest(Point P[], int n);
-
 #endif

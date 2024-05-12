@@ -33,33 +33,17 @@ int searchBT2D(BTree2D *tree, Point value) {
             return searchBT2D(tree->right, value);
     }
 }
-int get_point_index(BTree2D *tree, Point value){
-    if  (tree->point == NULL)
-        return -1;
 
-    Point point = *(tree->point);
-
-    if ((point.x == value.x) && (point.y == value.y))
-        return point.index;
-
-    if (tree->depth % 2 == 1) {
-        if (point.x < value.x)
-            return searchBT2D(tree->left, value);
-        else
-            return searchBT2D(tree->right, value);
-    } else {
-        if (point.y < value.y)
-            return searchBT2D(tree->left, value);
-        else
-            return searchBT2D(tree->right, value);
-    }
-}
-
-void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *closest){
+void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *closest, int consider_self){
     if  (tree->point == NULL)
         return;
 
     Point point = *(tree->point);
+
+    if ( (consider_self == FALSE) &&
+    (equals(value, point) == TRUE)){
+        return;
+    }
 
     double distance = squaredDistance(value,point);
 
@@ -70,14 +54,40 @@ void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *clo
 
     if (tree->depth % 2 == 1) {
         if (point.x < value.x)
-            findClosestBT2D(tree->left, value, distance, closest);
+            findClosestBT2D(tree->left, value, distance, closest, consider_self);
         else
-            findClosestBT2D(tree->right, value, distance, closest);
+            findClosestBT2D(tree->right, value, distance, closest, consider_self);
     } else {
         if (point.y < value.y)
-            findClosestBT2D(tree->left, value, distance, closest);
+            findClosestBT2D(tree->left, value, distance, closest, consider_self);
         else
-            findClosestBT2D(tree->right, value, distance, closest);
+            findClosestBT2D(tree->right, value, distance, closest, consider_self);
+    }
+}
+
+void findFarthestBT2D(BTree2D *tree, Point value, double bestDistance, Point *farthest){
+    if  (tree->point == NULL)
+        return;
+
+    Point point = *(tree->point);
+
+    double distance = squaredDistance(value,point);
+
+    if (distance > bestDistance)
+        *farthest = *tree->point;
+    else
+        distance = bestDistance;
+
+    if (tree->depth % 2 == 1) {
+        if (point.x > value.x)
+            findFarthestBT2D(tree->left, value, distance, farthest);
+        else
+            findFarthestBT2D(tree->right, value, distance, farthest);
+    } else {
+        if (point.y > value.y)
+            findFarthestBT2D(tree->left, value, distance, farthest);
+        else
+            findFarthestBT2D(tree->right, value, distance, farthest);
     }
 }
 

@@ -56,7 +56,7 @@ static void match_with_closest_sample(Point **sets, Point *input, Point* samples
     for (int i = 0; i < array_length(input); i++){
         Point current_point = input[i];
         Point closest;
-        findClosestBT2D(binary_tree, current_point, INFINITY, &closest);
+        findClosestBT2D(binary_tree, current_point, INFINITY, &closest, TRUE);
         matrix_append(sets, closest.index, current_point);
     }
 
@@ -181,7 +181,7 @@ static double entry_radius(Tree * subtree, Point point){
     return sqrt(max);
 }
 
-static void set_height(Tree *T_sup){
+void set_height(Tree *T_sup){
     if(T_sup == NULL)
         return;
 

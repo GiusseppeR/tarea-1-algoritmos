@@ -13,8 +13,8 @@ typedef struct btree2d{
 
 BTree2D *initBT(int depth);
 int searchBT2D(BTree2D *tree, Point value);
-int get_point_index(BTree2D *tree, Point value);
-void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *closest);
+void findClosestBT2D(BTree2D *tree, Point value, double bestDistance, Point *closest, int consider_self);
+void findFarthestBT2D(BTree2D *tree, Point value, double bestDistance, Point *farthest);
 void insertBT2D(BTree2D *tree, Point value);
 void freeBT2D(BTree2D *tree);
 

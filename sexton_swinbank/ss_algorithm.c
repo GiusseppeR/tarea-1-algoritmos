@@ -4,6 +4,7 @@
 #include "../utils.h"
 #include "ss_utils.h"
 #include "../random/custom_random.h"
+#include "../trees/2dTrees.h"
 
 Allocator my_other_allocator = {my_alloc, my_free, 0};
 
@@ -13,28 +14,32 @@ static Point * get_clusters_points(Cluster c1, Cluster c2);
  * @brief Función que retorna el medoide primario dentro de un arreglo de puntos
  */
 static Point primary_medoide(Point * input) {
-    if (array_length(input)<3) {
-        const Point medoide = {input[0].x,input[0].y,0};
-        return medoide;
+    double * radius = array(double, &my_other_allocator);
+
+    BTree2D *binary_tree = initBT(1);
+
+    for(int i = 0; i < array_length(input); i++)
+        insertBT2D(binary_tree, input[i]);
+
+    for (int i = 0; i < array_length(input) - 1; i++){
+        Point farthest;
+        findFarthestBT2D(binary_tree,input[i],0,&farthest);
+
+        double rad = squaredDistance(input[i],farthest);
+        array_append(radius, rad);
     }
 
-    double min =INFINITY;
-    Point medoide={0,0,0};
+    int index = 0;
 
-    for(int i=0; i < array_length(input); i++) {
-        double dist=0;
-
-        for(int k=0; k < array_length(input); k++ ) {
-            dist+= squaredDistance(input[i], input[k]);
-        }
-
-        if(dist < min){
-            min=dist;
-            medoide= input[i];
-            (&medoide)->index = i;
+    double min_rad = INFINITY;
+    for (int i = 0; i < array_length(radius); i++){
+        if (radius[i] < min_rad){
+            min_rad = radius[i];
+            index = i;
         }
     }
-    return medoide;
+    freeBT2D(binary_tree);
+    return (Point) {input[index].x, input[index].y, index};
 }
 /**
  * @brief Función que retorna un arreglo dinamico que contiene los puntos copiados de points.
@@ -130,7 +135,7 @@ static Cluster * make_cluster(Point p1, Point p2, Point * points) {
     array_append(c1_points,p1);
     array_append(c2_points,p2);
 
-    for (int i=0; i<array_length(points); i++) {
+    for (int i = 0; i<array_length(points); i++) {
         if (equals(p1, points[i]) || equals(p2, points[i])) {
             continue;
         }
@@ -138,6 +143,7 @@ static Cluster * make_cluster(Point p1, Point p2, Point * points) {
     }
 
     int flag = TRUE;
+
     while (array_length(points_copy)!=0) {
         if (flag) {
             int index = find_closest_to(points_copy,p1);
@@ -176,7 +182,7 @@ static Cluster *min_max_policy(Cluster c1, Cluster c2) {
 
     double r_min_max = INFINITY;
     //{p1,p2,p3,p4,p5,p6...}
-    for (int i = 0; i<array_length(all_points)-1; i++) {
+    for (int i = 0; i < array_length(all_points) - 1; i++) {
         int j = i+1;
         while (j < array_length(all_points)) {
             random_points[0] = all_points[i];
@@ -185,14 +191,14 @@ static Cluster *min_max_policy(Cluster c1, Cluster c2) {
             Cluster *clusters = make_cluster(random_points[0],random_points[1],all_points);
             double r1 = cluster_covering_radius(clusters[0]);
             double r2 = cluster_covering_radius(clusters[1]);
-            double r_max = (r1>r2)? r1:r2;
+            double r_max = (r1 > r2) ? r1 : r2;
 
             if (j == 1) {
                 r_min_max = r_max;
                 result[0]= clusters[0];
                 result[1] = clusters[1];
             }
-            else if (r_max<r_min_max) {
+            else if (r_max < r_min_max) {
                 array_free(result[0].array);
                 array_free(result[1].array);
                 r_min_max = r_max;
@@ -221,25 +227,36 @@ static int * nearest_clusters(Cluster * clusters) {
     }
 
     Point * medoide_array = array(Point,&my_other_allocator);
+    BTree2D *binary_Tree = initBT(1);
 
     for (int i = 0; i<array_length(clusters);i++) {
         Point m = clusters[i].array[clusters[i].index_primary_medoide];
         (&m)->index = i;
         array_append(medoide_array,m);
+        insertBT2D(binary_Tree, m);
     }
 
-    ClosestPoints points = closest(medoide_array, array_length(medoide_array));
+    double min_dist = INFINITY;
+    for(int i = 0; i < array_length(medoide_array); i++){
+        Point closest;
+        findClosestBT2D(binary_Tree,medoide_array[i],INFINITY,&closest,FALSE);
 
-    indices[0] = points.point1.index;
-    indices[1] = points.point2.index;
+        double dist = squaredDistance(medoide_array[i],closest);
+        if(dist < min_dist){
+            min_dist = dist;
+            indices[0] = i;
+            indices[1] = closest.index;
+        }
+    }
+
     array_free(medoide_array);
-
+    freeBT2D(binary_Tree);
     return indices;
 }
 
 
 //Metodo para Cluster
-static Cluster * cluster(Point* input) {
+Cluster * cluster(Point* input) {
     Cluster *C = array(Cluster, &my_other_allocator);
     Cluster *Cout = array(Cluster, &my_other_allocator);
 
@@ -317,49 +334,56 @@ static Cluster * cluster(Point* input) {
 static Point * entries_get_points(Entry * entries) {
     Point * points = array(Point, &my_other_allocator);
     for (int i = 0; i<array_length(entries); i++) {
-        array_append(points,entries[i].point);
+        Point p = entries[i].point;
+        array_append(points,p);
     }
     return points;
 }
 
 static Entry leaf(Point * input){
-    Point g = primary_medoide(input); //medoide primario de input
-    double r = 0; //radio
+    Point g = primary_medoide(input);
+    double r = 0;
+
     Tree * C = (Tree *)malloc(sizeof(Tree));
     C->height = 1;
     C->size = 0;
-    C->entries = (Entry*)array(Entry,&my_other_allocator);
+    C->entries = array(Entry,&my_other_allocator);
     C->parent = NULL;
-    for(int i = 0; i < array_length(input); i++){ //para cada punto del input
-        Entry p = {input[i], 0, NULL}; //aramamos un entry
-        array_append(C->entries, p); //lo agregamos a C
-        double r_a = squaredDistance(g,p.point); //distancia
-        r = ( r > r_a) ? r : r_a;//recalculamos r
+
+    for(int i = 0; i < array_length(input); i++){
+        Entry p = {input[i], 0, NULL};
+        array_append(C->entries, p);
+        C->size += 1;
+
+        double r_a = squaredDistance(g,p.point);
+        r = ( r > r_a) ? r : r_a;
     }
-    C->size = array_length(C->entries);
-    Entry *ret = (Entry *)malloc(sizeof(Entry)); //creamos entry de hoja
+
+    Entry *ret = (Entry *)malloc(sizeof(Entry));
     ret->point = g;
-    ret->radius = r;
+    ret->radius = sqrt(r);
     ret->subTree = C;
     C->parent = ret;
-    return *ret; //se retorna
+    return *ret;
 }
 
 /**
  * @brief Función que retorna un entry (G,R,A)
  */
 static Entry internal(Tree* c_mra) {
-    Point * c_in = entries_get_points(c_mra->entries); // Agrupo solo los puntos de las entries
-    Point g = primary_medoide(c_in); // Encuentro el medoide primario de este
-    double r = 0.0; // Seteo el radio en 0
+    Point * c_in = entries_get_points(c_mra->entries);
+    Point g = primary_medoide(c_in);
+    double r = 0;
+
     for (int i = 0; i<array_length(c_in); i++) {
-        r = fmax(r,squaredDistance(g,c_in[i]) + c_mra->entries[i].radius); // Voy actualizando la R con cada punto de c_in
+        double dist = sqrt(squaredDistance(g,c_in[i]));
+        r = fmax(r,dist + c_mra->entries[i].radius);
     }
+
     Entry result = {g,r,c_mra};
     c_mra->parent = NULL;
     return result;
 }
-
 
 Tree * sexton_swinbank(Point * input) {
     if (array_length(input)<=B) {
@@ -371,24 +395,24 @@ Tree * sexton_swinbank(Point * input) {
         array_append(c_entries,leaf(c_out[i].array));
     }
     Tree * c = malloc(sizeof(Tree));
-    c->height = 2;
+    c->height = 0;
     c->size = array_length(c_entries);
     c->entries = c_entries;
     c->parent = NULL;
-    while (c->size > B) { //GENERAR ALTURAS
-        input = entries_get_points(c->entries); //redefino el input
-        c_out = cluster(input); //redefino cout { {array,index} {array,index} {array,index} {array,index}}
-        Tree ** c_mra = array(Tree *,&my_other_allocator); //ver sis e pueden cambiar por trees
-        for (int i=0; i<array_length(c_out);i++) { //c_out[i] es c de cluster en cout
+    while (c->size > B) {
+        input = entries_get_points(c->entries);
+        c_out = cluster(input);
+        Tree ** c_mra = array(Tree *,&my_other_allocator);
+        for (int i=0; i<array_length(c_out);i++) {
             Tree *s_tree = malloc(sizeof(Tree));
-            s_tree->height = c->height;
+            s_tree->height = 0;
             s_tree->size = 0;
-            s_tree->entries = (Entry *)array(Entry,&my_other_allocator);
+            s_tree->entries = array(Entry,&my_other_allocator);
             s_tree->parent = NULL;
 
             for (int j = 0; j<array_length(c_out[i].array);j++) {
                 for(int k = 0; k<array_length(c->entries);k++) {
-                    if (equals(c->entries[k].point, c_out[i].array[j])) {
+                    if (equals(c->entries[k].point,c_out[i].array[j])) {
                         Entry entry = {c->entries[k].point,c->entries[k].radius,c->entries[k].subTree};
                         array_append(s_tree->entries,entry);
                         break;
@@ -405,8 +429,8 @@ Tree * sexton_swinbank(Point * input) {
             array_append(c->entries,internal(c_mra[i]));
         }
         c->size = array_length(c->entries);
-        c->height+=1;
         array_free(entrie_pivote);
     }
+    set_height(c);
     return internal(c).subTree;
 }
