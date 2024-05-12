@@ -26,18 +26,28 @@ static void hundred_queries(Tree tree,int n, Point * input){
     int mean_accesses = 0;
     int mean_points = 0;
     double mean_percentage = 0;
+    int * values = array(int, &alloc);
     for(int i = 0; i < array_length(input); i++){
         Point * results = array(Point, &alloc);
         int accesses = 0;
         Point center = input[i];
         query(tree, center, 0.02, &results, &accesses);
+        array_append(values, accesses);
         mean_accesses += accesses;
         mean_points += array_length(results);
         mean_percentage += (double)array_length(results) / (double)n * 100;
 
         array_free(results);
     }
+    double mean = (double) mean_accesses/100;
+    double standar_deviation = 0;
+    for (int i = 0; i < array_length(values); i++){
+        standar_deviation += (values[i] - mean) * (values[i] - mean);
+    }
+    standar_deviation = sqrt(standar_deviation/ (double)(array_length(values) - 1));
+
     printf("Cantidad de accessos promedio: %i\n", mean_accesses/100);
+    printf("Desviacion estandar de accesos: %f\n", standar_deviation);
     printf("Cantidad de puntos promedio: %i\n", mean_points/100);
     printf("Porcentaje de cobertura promedio: %f\n", mean_percentage/100);
 }
