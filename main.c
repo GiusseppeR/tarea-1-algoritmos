@@ -67,7 +67,7 @@ int main(void) {
                 generate_experiment_cp(input[i], query_centers);
         }
         else if(selection == 1){
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 6; i++)
                 generate_experiment_ss(input[i], query_centers);
         }else{
             continue;
